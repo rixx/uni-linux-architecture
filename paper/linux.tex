@@ -129,9 +129,21 @@ We will highlight the differences between both of these processes within the Lin
 \subsection{Requirements engineering process}
 
 The requirements engineering process of the Linux kernel project as it exists now is nearly non-existent beyond the quality requirements which are met by the workflow described below.
+This is obviously very unusual: In the software development industry, requirements engineering is a self-evident necessity, as illustrated by the related IEEE tutorial\cite{thayer1997software} and other extensive literature on the subject.
+Even other open source projects tend to have some sort of explicit requirements engineering, sometimes by way of a defined API, or community-designed requirements or even requirements imposed by a committee.
 
+The Linux kernel project rejects all of these ways of requirements engineering.
+While it does provide a large and mostly stable API externally, the documentation very explicitly states that the internal API is not and does not aim to be stable and thus does not provide requirements in itself.
+Linux also is not certified with any kind of interface-related certification such as the POSIX certification group which provides a common standard for operating system interfaces, which is only used as a guideline. POSIX certified systems include OS-X and Solaris.
 
 \subsubsection{Requirements engineering developments}
+
+Historically, Linux development has always rather followed the demands arising from within the development community than some specific requirements.
+This started at the very beginning, when Linus Torvalds was mostly focussed on getting the initial kernel to run on his own hardware and work for his own needs, which was then extended by other developers with different hardware and additional needs.
+
+This has not changed fundamentally, as changes are still contributed by community developers following only the requirements placed upon them by the contribution process described below.
+The major difference between the beginnings of Linux and the current development community is that as of 2015, more than \(80\%\) of Linux kernel developers are paid for their work on the Linux kernel\cite{corbet2015linux}.
+This implies that while the requirements engineering process within the community is still unstructured, there might be less visible requirements engineering processes in external interest groups, directing their developers to work on features of their interest.
 
 \subsubsection{External requirements engineering}
 
