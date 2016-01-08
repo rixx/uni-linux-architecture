@@ -3,6 +3,7 @@
 
 \documentclass{sig-alternate-05-2015}
 
+\usepackage{listings}
 % remove Copyright
 \makeatletter
 \def\@copyrightspace{\relax}
@@ -11,18 +12,18 @@
 \begin{document}
 
 \title{Requirements Engineering and Software Architecture in the Linux Kernel}
-\subtitle{[Paper for the Requirements Engineering and Software Architecture course at Universität Stuttgart 2015/16]}
+\subtitle{[Paper for the Requirements Engineering and Software Architecture course at University of Stuttgart 2015/16]}
 
 \numberofauthors{3}
 \author{
     \alignauthor Julian Kuhn\\
-        \affaddr{Universität Stuttgart}\\
-        \email{mail@example.com}
+        \affaddr{University of Stuttgart}\\
+        \email{kuhjulian@web.de}
     \alignauthor Friederike Kunze\\
-        \affaddr{Universität Stuttgart}\\
+        \affaddr{University of Stuttgart}\\
         \email{mail@example.com}
     \alignauthor Oliver R{\"o}hrdanz\\
-        \affaddr{Universität Stuttgart}\\
+        \affaddr{University of Stuttgart}\\
         \email{mail@example.com}
 }
 
@@ -159,7 +160,179 @@ This implies that while the requirements engineering process within the communit
 \subsubsection{Contribution process results}
 
 \section{Software Architecture}
+\subsection{Overview}
+Since from the very first release of the linux kernel in August 1991 \cite{linuxtimeline} with about 150.000 lines of code, the current version has grown to over 15 million lines of code. In order to manage this huge amount of code, a sophisticated architecture is needed.
+\begin{figure}[h]
+\centering
+\includegraphics[width= 0.45\textwidth ]{img/chart.pdf}
+\label{kconfig-compil}
+\caption{Evolution of lines of code of the linux kernel \cite{linuxcounter}}
+\end{figure}
 
+Additionally, there must be an easy way to include and exclude features from a kernel image. 
+Figure \ref{fig:kernelmap} shows overview of the linux kernel. Among other main features, the kernel provides the following  components \cite{mauerer2010professional}:
+\begin{figure}[h]
+\centering
+\includegraphics[width= 0.45\textwidth ]{img/Linux_kernel_map.png}
+\label{fig:kernelmap}
+\caption{"Linux kernel map" by Conan at English Wikipedia \cite{kernelmap}}
+\end{figure}
+
+
+\begin{itemize}
+\item \emph{Virtual Memory}: The kernel separates the virtual address space into a kernel and user address space. Both spaces need to be managed and mapped to physical memory.
+\item \emph{Virtual File System}: In order to provide support for a large variety of file systems, the kernel uses an abstraction layer called virtual file system (VFS).
+\item \emph{Networking}: Linux also supports the  Internet protocol suite \cite{almquist1992type}, making it one of the larges features of the kernel by comprising around 15 MB of source code alone.
+\item \emph{Device drivers}: In order to  support e.g. peripherals, device drivers are needed to use them. The linux kernel uses an abstraction layer, supporting different categories of device drivers.
+\item \emph{Process scheduling and threading}: To support multitasking and quasi parallelism, extensive process managing and the support of threads are needed.
+\item \emph{System Call Interface} As there is an separation between the user and kernel space, an interface to the kernel space is needed. The System Call Interface provides functionalities, executed in the kernel space that are callable from the user space.
+\end{itemize}
+
+
+Because it is impossible to cover all topics visualized in figure \ref{fig:kernelmap}, we will focus on a small part and cover the following topics in this chapter:
+\begin{itemize}
+\item \emph{Linux as a product line}: We will describe the Kconfig language and how users can customize a kernel image.
+\item \emph{Virtual file system}: The VFS is an abstraction of file systems. Here we will focus on read operations and how they are implemented if one wants to develop a new file system support for Linux.
+\item \emph{Device drivers}: Device drivers are an essential part of every operating system. We will shorty describe the types of device drivers supported by Linux and give a brief introduction on how device drivers can be developed.
+\item \emph{Modules}: Modules can be seen as containers for System Calls, file systems or device drivers. We briefly give an introduction on how modules can be developed and what tools can be used to integrate them into the system.
+\end{itemize}
+
+
+\subsection{Monolithic vs Microkernels}
+ The operating system seperates the virtual memory into two address spaces: the kernel space and the user space \cite{stankov2006discussion}. Processing running inside the kernel space are for example allowed to access memory spaces of other processes. This makes these processes fast and unrestricted yet introducing a security risk if one can get unauthorized access to one of these processes. Therefore, most of the processes are running inside the user space, which gives the process lots of restrictions. For example, these processes are only allowed to access their own memory space. \\ A monolithic kernel differs from a microkernel in the following way: Microkernels only provide core functionalities such as threading or scheduling.  These core functionalities run inside the kernel space. Explicit message passing is needed for cummincation between the OS layers. Additional functionalities such as networking are  modules which all run in the user space making them slower but also thin.  A monolithic kernel on the other hand is taking a different approach. Monolithic kernels provide all functionalities, even if they are not needed. All functionalities are running in the kernel space. This can make a monolithic kernel more bloated yet faster . \\
+Linux is a monolithic kernel. In addition to the fixed kernel functionalities, Linux provides so called Loadable Kernel Modules (LKMs). The LKMs extend the functionality of the Operating System and they can be loaded and unloaded dynamically during runtime. By using Modules,  many advantages of the microkernel architecture can be achieved \cite[pp. 11]{bovet2005understanding}. In Chapter \ref{chap:mods}, we will focus on LKMs. \\
+
+
+\subsection{Linux as a product line}
+As stated above, the Linux Kernel has an monolithic architecture, forcing the user the compile a new kernel image if features should be added or removed static kernel. Of course, these customization would be impossible, if the user himself had to configure the makefiles or sources.\\
+To provide a standard way of preconfiguring the integration of features into the image. A feature modeling language, called Kconfig \cite{kconfig} is used for this purpose. In the following, we will describe how the kconfig language works and how the configuration is reflected into makefiles.
+\subsubsection{Configuration Process}
+Kconfig is a feature modeling language developed for the linux kernel compilation. Kconfig is used since Kernel version 2.5 \cite{mauerer2010professional}. In the following, the syntax and main components of the Kconfig language will be described.\\ Each directory of the kernel sources has its own kconfig file. The top-level kconfig files are including the child-configuration files and merge them together.\\ Inside the Kconfig files, the corresponding sources and dependencies are described. If a user wants to view and select features, he can use a program like menuconfig. Through this program, all configuration files are read and a tree structure according to the dependencies and the directory structure is built. The user can select/unselect the features he wants to add to the kernel. These selections are then stored into a separate ``.config'' file. This file is then used for the custom compilation.\par 
+\subsubsection{Kconfig language}
+The kconfig language uses a hierarchical structure to describe configurations. The top-level element is called ``menu''. Inside this declaration, attributes and configuration options are declared. \\
+\emph{Configuration options} always begin with the keyword ``config'' and are followed by a symbol. After that, declarations of different types can be made. The available types are ``bool, ``string'', ``hex'', ``integer'' and ``tristate'', except the last one, all types are the same as from other  common programming languages. ``Tristate'' refers to three states : ``y'', ``n'', ``m'' with the meaning ``compiled in'', ``modular'' and ``do not compile''.\\
+Other \emph{keywords} are ``comment'' and ``source''. The first adds a comment which is displayed to the user without a selection option. The keyword ``source'' makes a reference to other configuration files, and just copying the content of the referred files into the current one like it is done in C - language  includes.\\
+\emph{Attributes} are used to describe the \emph{configuration options} in more detail. ``Default'' is setting a default value for the config entry, e.g. ``y'' or ``n'' with a bool type. ``Range'' is specifying  upper and lower borders for numeric values like int. ``Select'' is used for an automatic selection of other configuration options if that configuration is selected by the user. This can be for example used to resolve dependencies automatically.\\
+The attribute ``help'' displays a helping text.''depends on'' introduces restrictions when selecting a configuration option. A option with a ``depends on'' clause may only be selected if all other dependencies are resolved. In order to describe sophisticated dependencies, logical operations `''\&\&'' and ``||'' can be used. Listing \ref{lst:kconfig} shows an example including all the previously described language details.
+\lstinputlisting[frame=single,  basicstyle=\tiny, caption=Excerpt from linux/samples/kconfig, label=lst:kconfig]{lst/kconfig_example.txt}
+
+\subsubsection{Compilation process}
+\begin{figure}[h]
+\centering
+\includegraphics[width= 0.45\textwidth ]{img/kconfig-compil.pdf}
+\label{kconfig-compil}
+\caption{Configuration process with kconfig}
+\end{figure}
+Through the usage of helper programs like ``menuconfig'', which generates a tree structure out of all kconfig-files, the user can specify the features he wants to have in the kernel. All selections are saved in a separate file ``.config'' . Out of this file a c-header file is generated with the name ``autoconf.h'', reflecting the configurations as preprocessor directives. This header file is linked to the compilation of the kernel. Inside the actual source code, it will be checked if certain directives are defined. For each \#define in the ``autoconf.h'' the corresponding code part will be available for compilation. Figure \ref{kconfig-compil} illustrates this process.
+
+
+
+
+%\subsection{Process Management}
+%Modern Operating Systems give the user a so called pseudo-parallelism. In contrast to a single process operating system where one process must be finished before the next can start, modern operating systems will allow multiple processes to run in parallel. As this is not a real parallelism but a software implementation of parallelism, the operating system is granting every process a small portion of runtime and is assigning these time portions to the processes through a scheduling mechanism. \\
+%Linux does not fulfill real-time requirements as there is no guarantee that a process may respond with a hard deadline. Since version 2.6.23 the kernel is using a completly fair scheduler. In the following, this scheduling mechanism will be described.\par
+%Every process has a life cycle. A process can have the following states during its life cycle: “running”, “waiting”, “sleeping” and “stopped”. Besides of that, there can be zombie processes, which are not working correctly but still running and consuming memory.
+%A scheduler is a mechanism to assign time-slices to processes. The linux scheduler is not using the traditional way of computing time slices for all processes and recalculating the time slices if they are used up. Instead, only waiting-time is considered for scheduling. The process with the largest waiting time will be scheduled next. As for the scheduling queue, a red-back tree is used. The task with the largest waiting-time is always the leftmost entry. [TODO evtl mehr auf redblack eingehen]
+\subsection{Virtual Filesystem}
+A operating System must support many different types of filesystems but also needs to provide a standard interface for creating,modifying and reading data on these file systems. For this purpose, a layer between the standard library (Libc) and the actual file system implementations is inserted: the Virtual File System (VFS). \\
+%[TODO: bild einfuegen, dass abstraction zu konkretem FS zeigt]
+The VFS abstracts  operations common to all filsystems, for example direct file operations or access controls. In the following, three small aspects of the VFS are described: the main file objects, the abstract read operation and how specific implementation aspects are reflected in the VFS.
+\subsubsection{Main file objects }
+There are four main file objects, namely the Superblock, Inodes,Dentries and Files. In the following, these four objects will be described in short and how they interact. 
+The Superblock contains information about the file system itself and is stored on the disk redundantly. Information stored is  for example  the used/free number of blocks and the root Inode.
+Files typically lie on a hard drive and have a starting block and a length. Of course, they can be divided into several blocks. There needs to be some kind of representation where the concrete data of the file lies and if it is divided into pieces. For this purpose, Linux is using Inodes. They abstract concrete files. They contain metadata of the file status, like the creation date or the permission and also pointers to the actual data. An Inode can also serve as a symbolic link to another Inode.\\
+Dentries are not store on the disk, but are rather used for caching reasons. They contain the name of the file, a pointer to the inode, the parent dentry and child dentries. Dentries resemble the tree structure of the file system in memory and are used to increase performance.
+File(-objects) represent currently opened files and contain information like the current data pointer inside the file, the size and the mode. Like dentries, they are not stored persistently.\par
+The following scenario visualized in figure \ref{fig:vfs-bsp} shows the interaction between the main objects of the VFS:
+\begin{figure}[h]
+\centering
+\includegraphics[width= 0.45\textwidth ]{img/vfs-bsp.pdf}
+\label{fig:vfs-bsp}
+\caption{Pointer structure of an opened file}
+\end{figure}
+
+Suppose a user program ``program1'' is opening a file, thus creating a file-objects containing all mode and  meta informations. The file-object has a pointer to a dentry (f\_dentry is the pointer inside the struct). The dentry itself is  pointing to the corresponding inode of the file, its superblock, and to the physical location of the data. 
+
+\subsubsection{Abstract read operation}
+
+If anyone wants support a new  type of filesystem, the kernel already provides some standard ways to deal with block devices for example. The most common type of a block device is a hard drive, where the physical storage is separated into chunks with a fixed length.
+In the following, we will look how a read() is working when a user program has opened a file and wants to retrieve some data from the file:\\
+First of all, there is a common struct called ``file\_operations'', which provides a standard way of reading,writing and other functionalities. Listing \ref{lst:file-operations} shows a small excerpt of the struct.
+\lstinputlisting[language=C, basicstyle=\tiny, frame=single, caption=Excerpt of the file-operations struct, label=lst:file-operations]{lst/file-operations.c}
+In order to provide custom opearation, the developer needs to declare a file\_operations struct, where he sets the function pointer to his own function. Listing \ref{lst:file-operations-ext3} shows the usage of the file-operations struct of the ext3 filesystem. 
+\lstinputlisting[language=C, basicstyle=\tiny, frame=single, caption= Excerpt of the file-opeartions implementation for ext3, label=lst:file-operations-ext3]{lst/file-operations-ext3.c}
+
+ As a filesystem could have different kind of files (e.g. directories, normal files, or named pipes) there could be the need for different kind of read functions.\\
+When a file is opened, a program read or write data from it. As figure \ref{fig:vfs-read-abstraction}shows, the read operation invoked in user space actually calls  the kernel function sys\_read(). The sys\_read() function actually delegates to the vfs\_read() function which either invokes a file specific method or a generic function, called do\_sync\_read. 
+The vfs\_read() function checks, if there is any specific read function is provided for this kind of file. If not, it uses the generic read function defined in the file\_operations struct.  Figure \ref{fig:generic_read} shows this procedure.
+\begin{figure}
+\centering
+\includegraphics[width= 0.45\textwidth ]{img/generic_read.jpg}
+\label{fig:generic_read}
+\caption{Selection of file specific read operations}
+\end{figure}
+
+ The vfs\_read() has the filedescriptor used to identify the file, the current read position and, after reading, this position will be updated. Inside it, either the specific or generic function will be called.\\
+Besides of the customizable file\_operations struct, Linux already provides a generic implementation for block-devices, which are for example used by the ext3 implementation shown in Listing \ref{lst:file-operations-ext3}. 
+
+
+\begin{figure}
+\centering
+\includegraphics[width= 0.45\textwidth ]{img/vfs-read-abstraction.pdf}
+\label{fig:vfs-read-abstraction}
+\caption{General functionality of the abstract read operation}
+\end{figure}
+
+\subsection{Device Drivers}
+Device Drivers are an essential part of every operating system. Linux also supports device drivers. In most cases, device drivers are developed as modules in order to integrate them into the system dynamically. In the following, we give a short overview what kind of drivers can be developed and a short introduction how they are developed. 
+\subsubsection{Overview}
+\subsubsection{Developing Device Drivers}
+
+\subsection{Modules}
+\label{chap:mods}
+Besides the fixed features parts of the kernel image, which will be available immediately after the start of the system, Linux allows so called Modules to be loaded into the system during runtime. A Module can be seen as a type of container for device drivers, system calls or filesystems.
+This approach has many advantages: New functionality can be deployed as a precompiled module and be loaded into the system dynamically. If new drivers are needed, users can just download and load the corresponding module. In addition, experimental features can be tested in an easy fashion without the need to reboot the system with each change of the module code.
+\subsubsection{General functionality}
+A Module consists of two major parts: The internal code and exported functions that can be called from userspace. A module can have dependencies to other modules. 
+The following files contain information about modules:
+\begin{itemize}
+\item \emph{/lib/modules/<kernel version>/modules.dep}: Dependencies  between the currently used modules are listed inside this file.
+\item \emph{/lib/modules/<kernel version>/kernel}: All available modules are listed here.
+\item \emph{/etc/modules/modprobe.conf}: All modules listed in this file will be loaded at startup into the system.
+\item \emph{/proc/modules}: Inside this file, all currently loaded module are listed.
+\end{itemize}
+
+The representation of module inside the kernel is done through a structure called \emph{module} which is defined inside \emph{module.h}. For each module which is integrated into the running system, one instance of this struct is existing. The struct contains general information about the module like the name, several function pointers for methods common to all modules, as well as the actual code providing the functionality of the specific module.
+
+In the following, a brief description on how modules are developed are given and how they are loaded and unloaded into the system.
+
+
+\subsubsection{Developing Modules}
+In order to develop a module on your own, three kernel specific header files are needed in general:
+\begin{itemize}
+\item \emph{<linux/init.h>}: Provides several macros for registering functions.
+\item \emph{<linux/module.h>}: Interface header file in order to develop modules.
+\item \emph{<linux/kernel.h>}: As normal c-library functions are not available inside the kernel, this header file gives kernel specific equivalents. For example, the normal printf() function cannot be used inside modules. Instead, one can use printk().
+\end{itemize}
+ Listing \ref{lst:mod-example} shows a sample module source code .
+An init-function will be called whenever the module is loaded, inside that, objects could be allocated for example. The init\_function returns a error code where  0 represents a success. \\
+The exit-function is called when a module is unloaded. 
+These functions must be registered via macros which are included by \emph{init.h}.  In addition, there are macros included from \emph{module.h} in order to mark the license of the module code. The code can be marked as GPL, several GPL mixed with BSD/MIT/MPL licences or proprietary. Also there are macros to include a description of the module, the authors, a name alias and some short info text.
+
+
+\lstinputlisting[language=C, frame=single,  basicstyle=\tiny, caption=Module example code, label=lst:mod-example]{lst/module_example.c}
+
+From the user perspective, a kernel module is compiled the same way as a normal c file. Internally the Kbuild system is used. Listing \ref{lst:mod-example} shows an example makefile.
+
+
+\lstinputlisting[frame=single,  basicstyle=\tiny, caption=Example makefile, label=lst:mod-mk]{lst/makefile.mk}
+Modules are loaded to the sytem as binary blobs. The binary is structured in the ELF binary format. By using this format, predefined sections can be used to include the module specific code. \\
+
+
+\subsubsection{Load \& Unload Mechanism}
+Modules are loaded into the kernel via the system call \emph{sys\_init\_module} which is copying the module data from the userspace into the kernel space. In addition, the system call is parsing the module for optional sections, checking if the format is correct and is processing arguments. 
+
+Users can add modules into the system with the \emph{modprobe} and \emph{insmod} commands. Insmod inserts a single module while modprobe also takes care of dependencies between multiple modules.
 \section{Conclusions}
 
 TODO: Conclusions
