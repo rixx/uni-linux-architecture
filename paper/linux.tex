@@ -21,7 +21,7 @@
         \email{kuhjulian@web.de}
     \alignauthor Friederike Kunze\\
         \affaddr{University of Stuttgart}\\
-        \email{mail@example.com}
+        \email{rixx@cutebit.de}
     \alignauthor Oliver R{\"o}hrdanz\\
         \affaddr{University of Stuttgart}\\
         \email{mail@example.com}
@@ -90,7 +90,7 @@ It has also steadily gained popularity on a variety of platforms ranging from mi
 The Linux kernel is to be found nearly everywhere, and understanding both its design patterns and development process means understanding one of the most influential software projects in the history of software engineering.
 
 % history
-Its architecture aswell as its development process as they exist at the moment are the result of a long history of experimentation of which the blind ends are just as instructional as the provisional result.
+Its architecture as well as its development process as they exist at the moment are the result of a long history of experimentation of which the blind ends are just as instructional as the provisional result.
 
 The Linux kernel's architecture has been called into question from the very beginning, when Linux creator Linus Torvalds and operating system expert Andrew Tanenbaum had passionate debates about the advantages and disadvantages of microkernels and monolithic kernels.
 More recent examples of architectural changes would include the removal of the so-called "big kernel log" in 2011.
@@ -160,7 +160,7 @@ Since there are no ways to prove these assumptions for certain or even provide s
 
 \subsubsection{Comparison with common requirement engineering strategies}
 
-As mentioned above, the internal requirements engineering process of the kernel community is nearly non-existant and therefor hard to compare with any common requirement engineering strategies.
+As mentioned above, the internal requirements engineering process of the kernel community is nearly non-existent and therefor hard to compare with any common requirement engineering strategies.
 On the other hand, the external requirement engineering processes are for the most part opaque for researchers because they are confined to the decision-making of a corporation.
 In the end, we don't have enough of a process in the internal community and not enough insight into the external corporations to make a meaningful statement about the decision-making process with regards to either of the two groups.
 
@@ -175,23 +175,59 @@ So in summary of the few actual facts regarding the requirement engineering proc
 
 \subsection{Contribution process}
 
-\subsubsection{Contribution process developments}
+The contribution process and workflow of the Linux kernel is a very strict construct that has grown over time and serves two primary goals.
+On the one hand it is used both to give structure to the contributions of thousands of developers, many of which contribute not very often or maybe even only once and thus have no knowledge of conventions and responsibilities beyond anything found in the official documentation.
+On the other hand, a strict contribution process also serves as a way of bringing quality control to the large amounts of commits, developers, features and lines of code.
+
+When a developer wants to change a feature or fix a bug in the Linux kernel, there are many rules they need to follow, all of them documented in the kernel software repository itself as well as many places on the internet.
+
+First, they need to make themselves familiar with the overall structure of the Linux kernel and find the submodule they are interested in.
+Every submodule has a submodule maintainer who will be the point of contact for the new developer.
+Next, they need to learn the kernel coding style, also detailed in the kernel documentation, because non-compliant changes will not even be considered to be merged into the kernel.
+
+After completing these first steps of familiarising themselves with their new environment, they may now add their feature or fix their bug and post their first design of the fix to a relevant mailing list for feedback.
+
+The next step is generating a patch and submitting it to their subsystem maintainer after implementing feedback gained on other ways (mailing lists, colleagues etc).
+The patch itself should be in the form of one or several git commits in a very specific format, specifically with very verbose commit messages detailing the goals and decisions made in the implementation, and never containing too much or too little change.
+Every commit needs to be signed by the author and then has to be sent to the subsystem maintainer, again in a very specific mail format, using only plain text and most commonly only one commit per mail.
+
+After some time of consideration, the subsystem maintainer will provide feedback to the developer, who needs to apply the feedback to his patches and re-submit them.
+This can be repeated as often as the subsystem maintainer is not willing to accept the patch.
+
+Once the patch is accepted, the original developer does not have to do anything anymore, but his patch is not yet in the mainline kernel.
+For this to happen, the subsystem maintainer will sign the commits again, to indicate his knowledge and approval of the patch, and submit them to either another maintainer or Linus Torvalds himself during the next merge window.
+A merge window is said to be open at the beginning of every development cycle.
+During this time, sufficiently stable patches are accepted and merged into the main kernel branch.
+After the merge window closes, the kernel is tested to assure that all patches work and every component works well with the others.
+During this time, only security patches and patches of glaring bugs are accepted.
+Only when this period of testing is finished, too, the original patch will be published to the public Linux kernel.
+
 \subsubsection{Quality control}
-\subsubsection{Comparison with common contribution processes}
-\subsubsection{Contribution process results}
+
+Quality control happens at at least two large points of control during this process.
+The first is the subsystem maintainer, who needs to sign off all changes and will be held accountable for any errors.
+Subsystem maintainers are chosen for their experience and reliability and skill.
+It is possible to ask for the expertise of others at this point if the subsystem maintainer feels that they cannot decide if a change is stable or correct.
+Since sometimes a subsystem maintainer will report to another maintainer, this adds even another point of quality control, since no maintainer would just merge changes into their branch without checking it for quality issues.
+
+The second point of quality control is the testing happening before a release.
+Linux has a lot of ways of testing kernel versions, among them large amounts of regression tests and later on many dedicated testers who run unstable Linux kernel versions on their own hardware.
+During the testing period, kernel versions are published weekly, and it takes about six to ten weeks until a new stable kernel version is released.
+Since the goal of releasing a new kernel version is to have all regressions fixed before the release, and there is no fixed timeframe to be adhered to for a release, Linux testing and quality control is unusually thorough.
+
 
 \section{Software Architecture}
 \subsection{Overview}
-Since from the very first release of the linux kernel in August 1991 \cite{linuxtimeline} with about 150.000 lines of code, the current version has grown to over 15 million lines of code. In order to manage this huge amount of code, a sophisticated architecture is needed.
+Since from the very first release of the Linux kernel in August 1991 \cite{linuxtimeline} with about 150.000 lines of code, the current version has grown to over 15 million lines of code. In order to manage this huge amount of code, a sophisticated architecture is needed.
 \begin{figure}[h]
 \centering
 \includegraphics[width= 0.45\textwidth ]{img/chart.pdf}
 \label{kconfig-compil}
-\caption{Evolution of lines of code of the linux kernel \cite{linuxcounter}}
+\caption{Evolution of lines of code of the Linux kernel \cite{linuxcounter}}
 \end{figure}
 
 Additionally, there must be an easy way to include and exclude features from a kernel image. 
-Figure \ref{fig:kernelmap} shows overview of the linux kernel. Among other main features, the kernel provides the following  components \cite{mauerer2010professional}:
+Figure \ref{fig:kernelmap} shows overview of the Linux kernel. Among other main features, the kernel provides the following  components \cite{mauerer2010professional}:
 \begin{figure}[h]
 \centering
 \includegraphics[width= 0.45\textwidth ]{img/Linux_kernel_map.png}
@@ -204,7 +240,7 @@ Figure \ref{fig:kernelmap} shows overview of the linux kernel. Among other main 
 \item \emph{Virtual Memory}: The kernel separates the virtual address space into a kernel and user address space. Both spaces need to be managed and mapped to physical memory.
 \item \emph{Virtual File System}: In order to provide support for a large variety of file systems, the kernel uses an abstraction layer called virtual file system (VFS).
 \item \emph{Networking}: Linux also supports the  Internet protocol suite \cite{almquist1992type}, making it one of the larges features of the kernel by comprising around 15 MB of source code alone.
-\item \emph{Device drivers}: In order to  support e.g. peripherals, device drivers are needed to use them. The linux kernel uses an abstraction layer, supporting different categories of device drivers.
+\item \emph{Device drivers}: In order to  support e.g. peripherals, device drivers are needed to use them. The Linux kernel uses an abstraction layer, supporting different categories of device drivers.
 \item \emph{Process scheduling and threading}: To support multitasking and quasi parallelism, extensive process managing and the support of threads are needed.
 \item \emph{System Call Interface} As there is an separation between the user and kernel space, an interface to the kernel space is needed. The System Call Interface provides functionalities, executed in the kernel space that are callable from the user space.
 \end{itemize}
@@ -220,7 +256,7 @@ Because it is impossible to cover all topics visualized in figure \ref{fig:kerne
 
 
 \subsection{Monolithic vs Microkernels}
- The operating system seperates the virtual memory into two address spaces: the kernel space and the user space \cite{stankov2006discussion}. Processing running inside the kernel space are for example allowed to access memory spaces of other processes. This makes these processes fast and unrestricted yet introducing a security risk if one can get unauthorized access to one of these processes. Therefore, most of the processes are running inside the user space, which gives the process lots of restrictions. For example, these processes are only allowed to access their own memory space. \\ A monolithic kernel differs from a microkernel in the following way: Microkernels only provide core functionalities such as threading or scheduling.  These core functionalities run inside the kernel space. Explicit message passing is needed for cummincation between the OS layers. Additional functionalities such as networking are  modules which all run in the user space making them slower but also thin.  A monolithic kernel on the other hand is taking a different approach. Monolithic kernels provide all functionalities, even if they are not needed. All functionalities are running in the kernel space. This can make a monolithic kernel more bloated yet faster . \\
+ The operating system separates the virtual memory into two address spaces: the kernel space and the user space \cite{stankov2006discussion}. Processing running inside the kernel space are for example allowed to access memory spaces of other processes. This makes these processes fast and unrestricted yet introducing a security risk if one can get unauthorized access to one of these processes. Therefore, most of the processes are running inside the user space, which gives the process lots of restrictions. For example, these processes are only allowed to access their own memory space. \\ A monolithic kernel differs from a microkernel in the following way: Microkernels only provide core functionalities such as threading or scheduling.  These core functionalities run inside the kernel space. Explicit message passing is needed for communication between the OS layers. Additional functionalities such as networking are  modules which all run in the user space making them slower but also thin.  A monolithic kernel on the other hand is taking a different approach. Monolithic kernels provide all functionalities, even if they are not needed. All functionalities are running in the kernel space. This can make a monolithic kernel more bloated yet faster . \\
 Linux is a monolithic kernel. In addition to the fixed kernel functionalities, Linux provides so called Loadable Kernel Modules (LKMs). The LKMs extend the functionality of the Operating System and they can be loaded and unloaded dynamically during runtime. By using Modules,  many advantages of the microkernel architecture can be achieved \cite[pp. 11]{bovet2005understanding}. In Chapter \ref{chap:mods}, we will focus on LKMs. \\
 
 
@@ -228,7 +264,7 @@ Linux is a monolithic kernel. In addition to the fixed kernel functionalities, L
 As stated above, the Linux Kernel has an monolithic architecture, forcing the user the compile a new kernel image if features should be added or removed static kernel. Of course, these customization would be impossible, if the user himself had to configure the makefiles or sources.\\
 To provide a standard way of preconfiguring the integration of features into the image. A feature modeling language, called Kconfig \cite{kconfig} is used for this purpose. In the following, we will describe how the kconfig language works and how the configuration is reflected into makefiles.
 \subsubsection{Configuration Process}
-Kconfig is a feature modeling language developed for the linux kernel compilation. Kconfig is used since Kernel version 2.5 \cite{mauerer2010professional}. In the following, the syntax and main components of the Kconfig language will be described.\\ Each directory of the kernel sources has its own kconfig file. The top-level kconfig files are including the child-configuration files and merge them together.\\ Inside the Kconfig files, the corresponding sources and dependencies are described. If a user wants to view and select features, he can use a program like menuconfig. Through this program, all configuration files are read and a tree structure according to the dependencies and the directory structure is built. The user can select/unselect the features he wants to add to the kernel. These selections are then stored into a separate ``.config'' file. This file is then used for the custom compilation.\par 
+Kconfig is a feature modeling language developed for the Linux kernel compilation. Kconfig is used since Kernel version 2.5 \cite{mauerer2010professional}. In the following, the syntax and main components of the Kconfig language will be described.\\ Each directory of the kernel sources has its own kconfig file. The top-level kconfig files are including the child-configuration files and merge them together.\\ Inside the Kconfig files, the corresponding sources and dependencies are described. If a user wants to view and select features, he can use a program like menuconfig. Through this program, all configuration files are read and a tree structure according to the dependencies and the directory structure is built. The user can select/unselect the features he wants to add to the kernel. These selections are then stored into a separate ``.config'' file. This file is then used for the custom compilation.\par 
 \subsubsection{Kconfig language}
 The kconfig language uses a hierarchical structure to describe configurations. The top-level element is called ``menu''. Inside this declaration, attributes and configuration options are declared. \\
 \emph{Configuration options} always begin with the keyword ``config'' and are followed by a symbol. After that, declarations of different types can be made. The available types are ``bool, ``string'', ``hex'', ``integer'' and ``tristate'', except the last one, all types are the same as from other  common programming languages. ``Tristate'' refers to three states : ``y'', ``n'', ``m'' with the meaning ``compiled in'', ``modular'' and ``do not compile''.\\
