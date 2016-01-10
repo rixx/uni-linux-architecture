@@ -24,7 +24,7 @@
         \email{rixx@cutebit.de}
     \alignauthor Oliver R{\"o}hrdanz\\
         \affaddr{University of Stuttgart}\\
-        \email{mail@example.com}
+        \email{roehrdor@outlook.com}
 }
 
 \maketitle
@@ -119,7 +119,7 @@ One of our primary sources was the \texttt{Documentation} directory in the Linux
 On the one hand, it holds valuable and up-to-date documentation of many Kernel modules and is therefore helpful to determine the overall project structure.
 On the other hand it also serves as a first point of contact for new developers and contains detailed and beginner-friendly information on the contribution process.
 
-There are multiple secondary sources giving insight into the Linux kernel development, such as "Understanding the Linux kernel"\cite{bovet2005understanding}, "Linux kernel development"\cite{love2010linux}, and "Maintainability of the Linux kernel"\cite{schach2002maintainability}.
+There are multiple secondary sources giving insight into the Linux kernel development, such as "Understanding the Linux kernel"\cite{bovet2005understanding}, "Linux kernel development"\cite{love2010linux}, "Maintainability of the Linux kernel"\cite{schach2002maintainability} and "Linux Device Drivers"\cite{Corbet:2005:LDD:1209083}.
 
 
 \section{Requirements Engineering}
@@ -340,11 +340,6 @@ Besides of the customizable file\_operations struct, Linux already provides a ge
 \caption{General functionality of the abstract read operation}
 \end{figure}
 
-\subsection{Device Drivers}
-Device Drivers are an essential part of every operating system. Linux also supports device drivers. In most cases, device drivers are developed as modules in order to integrate them into the system dynamically. In the following, we give a short overview what kind of drivers can be developed and a short introduction how they are developed. 
-\subsubsection{Overview}
-\subsubsection{Developing Device Drivers}
-
 \subsection{Modules}
 \label{chap:mods}
 Besides the fixed features parts of the kernel image, which will be available immediately after the start of the system, Linux allows so called Modules to be loaded into the system during runtime. A Module can be seen as a type of container for device drivers, system calls or filesystems.
@@ -387,9 +382,81 @@ Modules are loaded to the sytem as binary blobs. The binary is structured in the
 
 
 \subsubsection{Load \& Unload Mechanism}
+The \texttt{insmod} and \texttt{modprobe} functionalities can be used to load a kernel module during runtime. Where \texttt{insmod} only tries to load and start the kernel module the \texttt{modprobe} functionalty also tries to resolve all the needed dependencies required to run the kernel module, not matter whether these are indirect or recursive dependencies of the target module. \\
+\texttt{insmod} copies the compiled code and module data from the userspace to the kernel space and checks for external linkage, but in comparison to a normal linker this process does not modify the module's disk file but only the temporary data that has been copied to run the module.
+
 Modules are loaded into the kernel via the system call \emph{sys\_init\_module} which is copying the module data from the userspace into the kernel space. In addition, the system call is parsing the module for optional sections, checking if the format is correct and is processing arguments. 
 
 Users can add modules into the system with the \emph{modprobe} and \emph{insmod} commands. Insmod inserts a single module while modprobe also takes care of dependencies between multiple modules.
+
+\subsection{Device Drivers}
+Device Drivers are an essential part of every operating system. Linux also supports device drivers. In most cases, device drivers are developed as modules in order to integrate them into the system dynamically. In the following, we give a short overview what kind of drivers can be developed and a short introduction how they are developed. 
+\subsubsection{Overview}
+In the view of the Linux kernel there are three different device types for which drivers can be written. These are \texttt{char modules}, \texttt{block modules} and \texttt{network modules}. Still programmers have the choice to implement different devices in the same code, which is nonetheless recommended \cite{Corbet:2005:LDD:1209083}.
+
+\paragraph{Char modules}
+A character device can be accessed in a stream fashioned way, comparable to accessing a file. But there is still a difference between regular files and these character modules, whereas a regular file allows seeking (jumping forward or backward in the file non sequentially) the underlying stream of a character module needs to be accessed sequentially. The are some excetions where once can also seek in these character modules using \texttt{mmap} and \texttt{lseek} functions, but this ist not usual. The driver is responsible to implement this behavior and therefore needs to at least implement the \texttt{open}, \texttt{close}, \texttt{read} and \texttt{write} system call operations. Some examples for a character module are \texttt{/dev/console} or \texttt{/dev/ttyS0}.
+
+\paragraph{Block module}
+As the char device a block device is also accessed through the /dev file system directory and normally represents a device that hosts a filesystem. In comparison to most unix operating systems where a block device normally works with block sizes instead of bytes linux allows a block device also work at the byte level. A block is usually 512 bytes or more. So the difference between a block device and a character device is rather small and differs only in the way the data is represented internally in the kernel since they have a completely different interface to the kernel than char drivers. A example for a block device is the hard drive of the system.
+
+\paragraph{Network module}
+Network connections are made through interfaces, an interface can a pure software device, e.g. such devices as loopback devices (ads) or real hardware devices that can actually exchange data with different hosts. Despite many network connections are stream-oriented the network driver does not need to know anything about the connection it is or has been involved in. The network driver is only responsible of sending and receiving packets. \\
+In comparison to the block and character driver a network driver is not easily mapped to a node in the filesystem, a character device could be accessed as \texttt{/dev/console}, what is not possible for network devices since they are not a stream oriented device. Instead the linux driver assigns unique identifiers and names to these intefaces, for network devices the probably best known one is \texttt{eth0}. Instead of using the known \texttt{open}, \texttt{close}, \texttt{read} or \texttt{write} system calls a network devices uses kernel functions that are completely related to packet transmission. 
+
+\subsubsection{Developing Device Drivers}
+On the one hand device drivers can be added statically to the Linux kernel, but this is only useful im some scenarios, e.g. when the system always needs a specific driver to work and this driver is already needed a startup, another scenario would be an embedded system, where the hardware is actually known and stays the same for the whole time. \cite{Corbet:2005:LDD:1209083} \\
+
+\paragraph{Security}
+In our modern times security is getting more and more important, although a driver programmer should avoid encoding security policies in their own code. The security policies are often and best handled by the kernel itself, if the knerl has any security holes in it, the whole system may be vulnerable. Still there are some rules a programmer should follow to ensure the system and driver is working.
+\begin{itemize}
+\item A driver that deals with input from the user should be suspicious. one should always assume the user wants to crash and hurt the system, therefore the input should never be trusted. It is also important to deal with uninitialized memory, in case this is done wrong data leakage might occur and important data might be compromised. To develop such a driver the author needs also to assure the user can not input any data that can harm the system.
+\item Since the kernel is written in the C programming language also the modules and the drivers are written in C. Unfortunately C makes it easy to introduce a lot of common programing error such as buffer overruns or reading or writing into invalid memory. Thes errors can compromise the stability of the whole system and should be definately prevented.
+\item A device driver should also be aware that in some cases some types of devices could affect the system. Some devices need to access global ressources which could actually damage the hardware physically or that could affect other users. Functions to set the default block size of a tape drive for example should only be done from privileged users, this check is not done by the kernel but needs to be done by the driver developer himself.
+\end{itemize}
+
+
+\subsection{Live Patching}
+Since Linux ist used as a server operating system as well as on regular desktops and mobile devices, developers strive to maximze the reliability, therefore minimizing the mean time between failures and maximizing the uptime of the service. So far updates to the system have really been critical, since the system was not able to adopt software changes on the fly, but therefore required some maintenance time for applying those. These maintenance times always involved some down time of the service. Many companies applied those security and feature updates in the night time when the service usage has been quite low. This has been working so far but also lead to problems in security since the server ran the faulty software for several hours being vulnerable to zero-day attacks. \\
+These issues led several companies such as SUSE and Red Hat to develop and introduce kGraft and kpatch in early 2014. Two kernel live patching technologies which aim to solve two problems \cite{kgraft-1}, incident response on the one site and emegency change on the other hand. The feature of live patching has been merged into the linux kernel mainline in late 2014 combining most of the features of kGraft and kPatch, which are pretty similar in its functionality.
+
+\subsubsection{kGraft}
+A kGraft patch itself is also just a kernel modul and has been implemented with only a small amount of code, since this module uses a lot of other leveraging linux technologies. To allow changes to the executed code on runtime kGraft makes heavy use of the insmod command, which installs a loadable modul into the running kernel, and therefore does not need to stop the running kernel. To make this technology work kGraft needs some additional space at the beginning of functions to modify them at runtime, this can be achieved by using gcc's \texttt{-pg} compiler flag which inserts a special function call at the beginning of functions which can later be used by kGraft to route around faulty functions, meaning data structure changes can not be patched and inserted into an running kernel at runtime. To redirect the code flow kGraft also uses this extra space like ftrace, this space is exactly 5 bytes, which is replaced with \texttt{NOP} instructions by the kernel at boot time. When the code flow needs to be redirected kGraft inserts a \texttt{INT3} instruction into the first byte, the following four bytes are filled using destination address. Finally the first byte is replaced again now containing a \texttt{JMP} instruction.
+
+\begin{figure}[ht!]
+	\includegraphics[width=0.5\textwidth]{img/kgraft_code_reflow.png}
+	\caption{Code reflow \cite{kgfraft-1}}
+	\label{fig:kgraft-code-reflow}
+\end{figure}
+
+The caller has not to change anything, the whole code reflow procedure has been completely done at function level, which justs redirects the function call to itself to a new, probably patched version of the exectuable code. \\ 
+\\
+But kGraft is now just limited to redirect the existing code flow but also provides the functionality to insert new functions and methods that shall be added to the kernel at runtime, still without the need to call \texttt{stop\_kernel()} and still without patching the anything of the caller's code.
+
+\begin{figure}[ht!]
+	\includegraphics[width=0.5\textwidth]{img/kgraft_new_func.png}
+	\caption{New function \cite{kgfraft-1}}
+	\label{fig:kgraft-new-func}
+\end{figure}
+
+
+\begin{figure}[ht!]
+	\includegraphics[width=0.5\textwidth]{img/kgraft-live-patching-realty-check-1.png}
+	\caption{Fail without reality check https://en.wikipedia.org/wiki/KGraft}
+	\label{fig:kgraft-real-check-fail}
+\end{figure}
+
+Inserting a new function is not that different from just redirect the code flow. Again the first bytes of the function are used, which are replaced with a \texttt{JMP} instructon to the address of the new, fixed function that needs to be executed. \\ Still there may be unresolved issues, Figure~\ref{fig:kgraft-real-check-fail} shows a scenario where the same function is called twice during a single system call or kernel function execution. The same fail might occur when calling the function recursivly. There needs to be a check which of these functions, the faulty or the patched one, has been used the first time so that the same function is used again to provide consistency in the system call. These function need to use the same data structures but may access them differently and therefore using both of the functions will probably result in kernel crash. In the final implementation the RCA algorithm has been used to keep consistent views of the to be patched or already patched functions. This algorithm implements kind of a mutlual exution with a low overhead and wait free read events, only the updates might be expensive  \\
+Therefore kGraft also does some reality checks, therefore each process is monitored and ensured to execute the same function, either still the old or already the new one consistently within the same, single system call. After everything has finally migrated to the new version these reality checks are no longer needed and do not need to be executed anymore. 
+
+\subsubsection{kPatch}
+kPatch is pretty similar to kGraft described above, it also aims to implement live patching. It also works at function level and uses the functionalities provided by ftrace to route around the function and to redirect the executed code flow. kPatch has the same limitations, it is possible to change the code but not to change the kernel data structures. Since these live patching systems are primarly desinged to apply security patches on the fly, which rarely change the kernel's data structure this is an acceptable limitation.
+
+
+
+%%
+%% Conclusion
+%%
 \section{Conclusions}
 
 TODO: Conclusions
