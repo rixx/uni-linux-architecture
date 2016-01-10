@@ -33,10 +33,9 @@
 
 This paper tries to detail both the requirements engineering process and the general software architecture of the Linux kernel project.
 
-With regards to the requirements engineering, the paper dicusses the unusual workflow and its results within the development community.
-It then continues to contrast this workflow with processes found with external contributors with their own interests in the Linux kernel development and maintenance.
-
-TODO: welche spezifischen Architektur-Teile?
+With regards to the requirements engineering, the paper discusses the unusual workflow and its results within the development community.
+It then continues to contrast this workflow with processes found with external contributors with their own interests in the Linux kernel development and maintenance.\\
+Since all of the kernel functionalities cannot be described in this paper, we focus on the following aspects: the Virtual File System (VFS), device drivers and modules. We analyze a specific module, namely the \emph{LivePatching} module introduced in the latest Kernel release. In addition we describe the customization process of the kernel with \emph{kconfig} language and helper programs like \emph{menuconfig}.
 
 TODO: Zusammenfassung der Resultate
 
@@ -108,18 +107,16 @@ But especially due to its size, history and changes this paper aims to examine t
 
 Because of the amount of contributors, users, code and work put into the Linux kernel project, there have been various papers published, the relevant of which will be discussed in the following section.
 Afterwards we will first discuss the requirements engineering process and general workflow within the Linux kernel project and its more commercial branches.
-Next we … TODO: was passiert im Software Architecture Teil?
+Next we  will describe ``Linux as a product line'' which is achieved by the Kconfig feature modeling language and helper tools like \emph{menuconfig}. We are focusing on the modularity aspect of the kernel, and are therefore describing the Virtual File System(VFS) which is an abstraction layer for file systems, device drivers, which are needed in order to use peripherals for example, and \emph{modules}, which can be seen as containers making it possible to provide file system implementations or device drivers as loadable components during the runtime for the kernel. 
 Finally we will sum up our findings and present our conclusions regarding the software architecture and requirements engineering within the Linux kernel.
 
 \section{Related work and sources}
-
-TODO: Stimmt das? Bitte fügt auch eure eigenen Quellen ein
 
 One of our primary sources was the \texttt{Documentation} directory in the Linux repository itself.
 On the one hand, it holds valuable and up-to-date documentation of many Kernel modules and is therefore helpful to determine the overall project structure.
 On the other hand it also serves as a first point of contact for new developers and contains detailed and beginner-friendly information on the contribution process.
 
-There are multiple secondary sources giving insight into the Linux kernel development, such as "Understanding the Linux kernel"\cite{bovet2005understanding}, "Linux kernel development"\cite{love2010linux}, "Maintainability of the Linux kernel"\cite{schach2002maintainability} and "Linux Device Drivers"\cite{Corbet:2005:LDD:1209083}.
+There are multiple secondary sources giving insight into the Linux kernel development, such as ``Understanding the Linux kernel''\cite{bovet2005understanding}, ``Linux kernel development"\cite{love2010linux}, ``Maintainability of the Linux kernel"\cite{schach2002maintainability} and ``Linux Device Drivers"\cite{Corbet:2005:LDD:1209083}.
 
 
 \section{Requirements Engineering}
@@ -256,8 +253,11 @@ Because it is impossible to cover all topics visualized in figure \ref{fig:kerne
 
 
 \subsection{Monolithic vs Microkernels}
- The operating system separates the virtual memory into two address spaces: the kernel space and the user space \cite{stankov2006discussion}. Processing running inside the kernel space are for example allowed to access memory spaces of other processes. This makes these processes fast and unrestricted yet introducing a security risk if one can get unauthorized access to one of these processes. Therefore, most of the processes are running inside the user space, which gives the process lots of restrictions. For example, these processes are only allowed to access their own memory space. \\ A monolithic kernel differs from a microkernel in the following way: Microkernels only provide core functionalities such as threading or scheduling.  These core functionalities run inside the kernel space. Explicit message passing is needed for communication between the OS layers. Additional functionalities such as networking are  modules which all run in the user space making them slower but also thin.  A monolithic kernel on the other hand is taking a different approach. Monolithic kernels provide all functionalities, even if they are not needed. All functionalities are running in the kernel space. This can make a monolithic kernel more bloated yet faster . \\
-Linux is a monolithic kernel. In addition to the fixed kernel functionalities, Linux provides so called Loadable Kernel Modules (LKMs). The LKMs extend the functionality of the Operating System and they can be loaded and unloaded dynamically during runtime. By using Modules,  many advantages of the microkernel architecture can be achieved \cite[pp. 11]{bovet2005understanding}. In Chapter \ref{chap:mods}, we will focus on LKMs. \\
+Most operating systems separate the virtual memory into two address spaces: the kernel space and the user space \cite{stankov2006discussion}. Processes running inside the kernel space are for example allowed to access memory spaces of other processes. This makes these processes fast and unrestricted yet introducing a security risk if one can get unauthorized access to one of these processes. Therefore, most of the processes are running inside the user space, which gives the process lots of restrictions. For example, these processes are only allowed to access their own memory space. \\
+Microkernels isolate their core functionality, which is running in kernel space, from other services or drivers. File systems for example are running in user space. Communication is taking place with explicite message passing (IPC). The advantage of this approach is, that every system service running in user space can be just restarted in the case of a failure. The problems microkernels are having is that they are difficult to debug because of the IPC message passing \cite{le2005gnu}. \\
+In opposite, a monolithic kernel runs all device drivers, the file system or networking in kernel space and these function blocks are coupled tightly. 
+So the terms \emph{monolithic kernel} and \emph{microkernel} refer to the amount of functionality they are providing in kernel space.\\
+Linux is a modular, monolithic kernel. In addition to the fixed kernel functionalities compiled into the kernel image, Linux provides so called Loadable Kernel Modules (LKMs). The LKMs extend the functionality of the Operating System and they can be loaded and unloaded into the kernel space dynamically during runtime. By using Modules,  many advantages of the microkernel architecture can be achieved \cite[pp. 11]{bovet2005understanding}. In Chapter \ref{chap:mods}, we will focus on LKMs. \\
 
 
 \subsection{Linux as a product line}
@@ -463,7 +463,7 @@ kPatch is pretty similar to kGraft described above, it also aims to implement li
 
 TODO: Conclusions
 
-TODO: Quellen
+
 
 \bibliographystyle{abbrv}
 \bibliography{sigproc}  % sigproc.bib is the name of the Bibliography in this case
