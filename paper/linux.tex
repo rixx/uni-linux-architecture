@@ -2,7 +2,7 @@
 % This file should be compiled with V2.5 of "sig-alternate.cls" May 2012
 
 \documentclass{sig-alternate-05-2015}
-
+\usepackage{url}
 \usepackage{listings}
 % remove Copyright
 \makeatletter
@@ -254,7 +254,7 @@ Because it is impossible to cover all topics visualized in figure \ref{fig:kerne
 
 \subsection{Monolithic vs Microkernels}
 Most operating systems separate the virtual memory into two address spaces: the kernel space and the user space \cite{stankov2006discussion}. Processes running inside the kernel space are for example allowed to access memory spaces of other processes. This makes these processes fast and unrestricted yet introducing a security risk if one can get unauthorized access to one of these processes. Therefore, most of the processes are running inside the user space, which gives the process lots of restrictions. For example, these processes are only allowed to access their own memory space. \\
-Microkernels isolate their core functionality, which is running in kernel space, from other services or drivers. File systems for example are running in user space. Communication is taking place with explicite message passing (IPC). The advantage of this approach is, that every system service running in user space can be just restarted in the case of a failure. The problems microkernels are having is that they are difficult to debug because of the IPC message passing \cite{le2005gnu}. \\
+Microkernels isolate their core functionality, which is running in kernel space, from other services or drivers. File systems for example are running in user space. Communication is taking place with explicit message passing (IPC). The advantage of this approach is, that every system service running in user space can be just restarted in the case of a failure. The problems microkernels are having is that they are difficult to debug because of the IPC message passing \cite{le2005gnu}. \\
 In opposite, a monolithic kernel runs all device drivers, the file system or networking in kernel space and these function blocks are coupled tightly. 
 So the terms \emph{monolithic kernel} and \emph{microkernel} refer to the amount of functionality they are providing in kernel space.\\
 Linux is a modular, monolithic kernel. In addition to the fixed kernel functionalities compiled into the kernel image, Linux provides so called Loadable Kernel Modules (LKMs). The LKMs extend the functionality of the Operating System and they can be loaded and unloaded into the kernel space dynamically during runtime. By using Modules,  many advantages of the microkernel architecture can be achieved \cite[pp. 11]{bovet2005understanding}. In Chapter \ref{chap:mods}, we will focus on LKMs. \\
@@ -405,7 +405,7 @@ Network connections are made through interfaces, an interface can be a pure soft
 In comparison to the block and character driver a network driver is not easily mapped to a node in the file system, a character device could be accessed as \texttt{/dev/console}, what is not possible for network devices since they are not a stream oriented device. Instead the Linux driver assigns unique identifiers and names to these interfaces, for network devices the probably best known one is \texttt{eth0}. Instead of using the known \texttt{open}, \texttt{close}, \texttt{read} or \texttt{write} system calls a network devices uses kernel functions that are completely related to packet transmission. 
 
 \subsubsection{Developing Device Drivers}
-On the one hand device drivers can be added statically to the Linux kernel, but this is only useful im some scenarios, e.g. when the system always needs a specific driver to work and this driver is already needed a startup, another scenario would be an embedded system, where the hardware is actually known and stays the same for the whole time. \cite{Corbet:2005:LDD:1209083} \\
+On the one hand device drivers can be added statically to the Linux kernel, but this is only useful im some scenarios, e.g. when the system always needs a specific driver to work and this driver is already needed a startup, another scenario would be an embedded system, where the hardware is actually known and stays the same for the whole time. \cite{Corbet:2005:LDD:1209083} \\ The normale case is that device drivers are provided to the system as modules.
 
 \paragraph{Security}
 In our modern times security is getting more and more important, although a driver programmer should avoid encoding security policies in their own code. The security policies are often and best handled by the kernel itself, if the knerl has any security holes in it, the whole system may be vulnerable. Still there are some rules a programmer should follow to ensure the system and driver is working.
@@ -427,7 +427,7 @@ A kGraft patch itself is also just a kernel module and has been implemented with
 
 \begin{figure}[ht!]
 	\includegraphics[width=0.5\textwidth]{img/kgraft_code_reflow.png}
-	\caption{Code reflow \cite{kgfraft-1}}
+	\caption{Code reflow \cite{kgraft-1}}
 	\label{fig:kgraft-code-reflow}
 \end{figure}
 
@@ -437,14 +437,14 @@ But kGraft is now just limited to redirect the existing code flow but also provi
 
 \begin{figure}[ht!]
 	\includegraphics[width=0.5\textwidth]{img/kgraft_new_func.png}
-	\caption{New function \cite{kgfraft-1}}
+	\caption{New function \cite{kgraft-1}}
 	\label{fig:kgraft-new-func}
 \end{figure}
 
 
 \begin{figure}[ht!]
 	\includegraphics[width=0.5\textwidth]{img/kgraft-live-patching-realty-check-1.png}
-	\caption{Fail without reality check https://en.wikipedia.org/wiki/KGraft}
+	\caption{Fail without reality check \cite{kgraft-2}}
 	\label{fig:kgraft-real-check-fail}
 \end{figure}
 
@@ -467,10 +467,10 @@ The Linux kernel contribution process on the other hand is very well-defined and
 In comparison to other open-source projects, the Linux kernel contribution process is rather complex and complicated.
 But once again, the results indicate success, seeing as the kernel community successfully manages thousands of contributors, many of them new, while maintaining strict quality control by regression testing, platform tests and personal responsibility distributed among many maintainers.
 
-The Linux kernel is a highly configurable and modular system. With the Kconfig modeling language Linux provides and easy-to-understand way of describing features and dependencies to other kernel modules from a developer point of view. From the user point of view configuring a custom kernel image is also done easily through helper programs like menuconfig. The VFS is an abstraction layer for file systems. Linux already provides standard implementations  for example for block devices and in is defining a fixed structure for implementing an own file system support through structs like \emph{file-operations}, which can be implemented with custom functions. Modules act as containers for file system implementations or device drivers and can be loaded into the kernel space during runtime, making it a easy way to extend the functionality of the kernel. For developing own modules, Linux provides standard header files, which provide function definitions which must be implemented and are used by the system for initializing and finalizing modules when they are loaded or unloaded. \emph{Insmod} and \emph{modprobe} are commonly used tools to load and unload modules from a user perspective.
+The Linux kernel is a highly configurable and modular system. With the Kconfig modeling language Linux provides and easy-to-understand way of describing features and dependencies to other kernel modules from a developer point of view. From the user point of view configuring a custom kernel image is also done easily through helper programs like menuconfig. The VFS is an abstraction layer for file systems. Linux already provides standard implementations  for example for block devices and in is defining a fixed structure for implementing an own file system support through structs like \emph{file-operations}, which can be implemented with custom functions.Device drivers are an essential part of Linux. Three types of device drivers are supported: \emph{char modules}, \emph{block modules} and \emph{network modules}. Modules act as containers for file system implementations or device drivers and can be loaded into the kernel space during runtime, making it a easy way to extend the functionality of the kernel. For developing own modules, Linux provides standard header files, which provide function definitions which must be implemented and are used by the system for initializing and finalizing modules when they are loaded or unloaded. \emph{Insmod} and \emph{modprobe} are commonly used tools to load and unload modules from a user perspective. We took a look into a specific module: LivePatching, allowing maintenance of kernel parts without having downtimes. The  LivePatching module integrated in the kernel mainline resembles functionality already provided by two other tools, namely kGraft and kPatch. \\
 
-TODO: Device driver
-TODO: livepatching
+
+
 
 
 
