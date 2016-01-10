@@ -37,7 +37,7 @@ With regards to the requirements engineering, the paper discusses the unusual wo
 It then continues to contrast this workflow with processes found with external contributors with their own interests in the Linux kernel development and maintenance.\\
 Since all of the kernel functionalities cannot be described in this paper, we focus on the following aspects: the Virtual File System (VFS), device drivers and modules. We analyze a specific module, namely the \emph{LivePatching} module introduced in the latest Kernel release. In addition we describe the customization process of the kernel with \emph{kconfig} language and helper programs like \emph{menuconfig}.
 
-TODO: Zusammenfassung der Resultate
+
 
 \end{abstract}
 
@@ -459,9 +459,13 @@ kPatch is pretty similar to kGraft described above, it also aims to implement li
 %%
 %% Conclusion
 %%
-\section{Conclusions}
+\section{Summary}
+TODO: RE Process
 
-TODO: Conclusions
+The Linux kernel is a highly configurable and modular system. With the Kconfig modeling language Linux provides and easy-to-understand way of describing features and dependencies to other kernel modules from a developer point of view. From the user point of view configuring a custom kernel image is also done easily through helper programs like menuconfig. The VFS is an abstraction layer for file systems. Linux already provides standard implementations  for example for block devices and in is defining a fixed structure for implementing an own file system support through structs like \emph{file-operations}, which can be implemented with custom functions. Modules act as containers for file system implementations or device drivers and can be loaded into the kernel space during runtime, making it a easy way to extend the functionality of the kernel. For developing own modules, Linux provides standard header files, which provide function definitions which must be implemented and are used by the system for initializing and finalizing modules when they are loaded or unloaded. \emph{Insmod} and \emph{modprobe} are commonly used tools to load and unload modules from a user perspective.
+
+TODO: Device driver
+TODO: livepatching
 
 
 
