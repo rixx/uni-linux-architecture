@@ -201,7 +201,7 @@ Only when this period of testing is finished, too, the original patch will be pu
 
 \subsubsection{Quality control}
 
-Quality control happens at at least two large points of control during this process.
+Quality control happens at at least two major points of control during this process.
 The first is the subsystem maintainer, who needs to sign off all changes and will be held accountable for any errors.
 Subsystem maintainers are chosen for their experience and reliability and skill.
 It is possible to ask for the expertise of others at this point if the subsystem maintainer feels that they cannot decide if a change is stable or correct.
@@ -460,7 +460,12 @@ kPatch is pretty similar to kGraft described above, it also aims to implement li
 %% Conclusion
 %%
 \section{Summary}
-TODO: RE Process
+The Linux kernel project uses a highly unusual requirements engineering process, comprised of an internal and an external process.
+The internal requirements engineering process is nearly non-existant and lacks structure, while the external requirements engineering processes happen within the variety of Linux kernel sponsor companies and are opaque and not open to scrutiny by the public.
+Nonetheless the Linux kernel requirements process seems to fulfill its purpose as indicated by the variety of platforms the Linux kernel is used and preferred on.
+The Linux kernel contribution process on the other hand is very well-defined and places importance on accountability and quality.
+In comparison to other open-source projects, the Linux kernel contribution process is rather complex and complicated.
+But once again, the results indicate success, seeing as the kernel community successfully manages thousands of contributors, many of them new, while maintaining strict quality control by regression testing, platform tests and personal responsibility distributed among many maintainers.
 
 The Linux kernel is a highly configurable and modular system. With the Kconfig modeling language Linux provides and easy-to-understand way of describing features and dependencies to other kernel modules from a developer point of view. From the user point of view configuring a custom kernel image is also done easily through helper programs like menuconfig. The VFS is an abstraction layer for file systems. Linux already provides standard implementations  for example for block devices and in is defining a fixed structure for implementing an own file system support through structs like \emph{file-operations}, which can be implemented with custom functions. Modules act as containers for file system implementations or device drivers and can be loaded into the kernel space during runtime, making it a easy way to extend the functionality of the kernel. For developing own modules, Linux provides standard header files, which provide function definitions which must be implemented and are used by the system for initializing and finalizing modules when they are loaded or unloaded. \emph{Insmod} and \emph{modprobe} are commonly used tools to load and unload modules from a user perspective.
 
